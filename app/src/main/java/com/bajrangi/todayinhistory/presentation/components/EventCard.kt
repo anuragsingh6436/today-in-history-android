@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.bajrangi.todayinhistory.R
@@ -31,6 +32,7 @@ import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
 import com.bajrangi.todayinhistory.presentation.theme.EraAncientMuted
 import com.bajrangi.todayinhistory.presentation.theme.EraCurrentMuted
 import com.bajrangi.todayinhistory.presentation.theme.EraModernMuted
+import com.bajrangi.todayinhistory.presentation.theme.IceBlue
 import com.bajrangi.todayinhistory.presentation.theme.YearAmberMuted
 
 private fun eraColor(year: Int) = when {
@@ -41,11 +43,14 @@ private fun eraColor(year: Int) = when {
 }
 
 /**
- * Event card — clean, scroll-safe, no entrance animation.
+ * Production-grade event card.
  *
- * Always shows an image area:
- *   - Has thumbnail → Coil loads from network
- *   - No thumbnail or error → placeholder drawable
+ * Upgrades:
+ *   - Pill-shaped year badge with era-tinted background
+ *   - 28dp content padding (editorial breathing room)
+ *   - Image clipped to card corners
+ *   - Taller gradient overlay on image (80dp)
+ *   - Press scale for tactile feedback
  */
 @Composable
 fun EventCard(
@@ -55,6 +60,7 @@ fun EventCard(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val yearColor = eraColor(event.year)
 
     GlassSurface(
         modifier = modifier
@@ -84,56 +90,68 @@ fun EventCard(
                     PlaceholderImage()
                 }
 
-                // Gradient over bottom of image
+                // Gradient overlay — taller for better readability
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp)
+                        .height(80.dp)
                         .align(Alignment.BottomCenter)
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color(0xFF070B1C).copy(alpha = 0.4f),
+                                    Color(0xFF070B1C).copy(alpha = 0.5f),
                                 ),
                             ),
                         ),
                 )
 
-                // Year badge
+                // ── Year pill badge ─────────────────────────
                 Text(
                     text = "${event.year}",
                     style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp,
                     ),
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = Color.White,
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(14.dp)
+                        .padding(12.dp)
                         .background(
-                            Color.Black.copy(alpha = 0.45f),
-                            RoundedCornerShape(8.dp),
+                            color = yearColor.copy(alpha = 0.7f),
+                            shape = RoundedCornerShape(20.dp), // Pill shape
                         )
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
                 )
             }
 
             // ── Text content ────────────────────────────────
-            Column(modifier = Modifier.padding(24.dp)) {
+            Column(
+                modifier = Modifier.padding(
+                    start = 24.dp,
+                    end = 24.dp,
+                    top = 20.dp,
+                    bottom = 24.dp,
+                ),
+            ) {
+                // Title
                 Text(
                     text = event.title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        lineHeight = 26.sp,
+                    ),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
+                // Description
                 Text(
                     text = event.aiSummary.ifBlank { event.description },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )

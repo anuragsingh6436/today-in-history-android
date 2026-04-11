@@ -19,4 +19,6 @@ sealed class Screen(val route: String) {
     data object Detail : Screen("detail/{eventIndex}") {
         fun createRoute(eventIndex: Int) = "detail/$eventIndex"
     }
+
+    data object Settings : Screen("settings")
 }

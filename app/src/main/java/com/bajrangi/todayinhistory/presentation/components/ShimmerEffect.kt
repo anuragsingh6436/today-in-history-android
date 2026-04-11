@@ -10,8 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,26 +27,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
- * Shimmer loading skeleton that mimics the event card layout.
- *
- * Shows pulsing placeholder bars where the year badge, title,
- * and description will appear — gives users spatial context
- * while data loads.
+ * Shimmer card matching the actual EventCard layout:
+ * - Image placeholder (16:9)
+ * - Year pill placeholder
+ * - Title bar
+ * - Description bars
  */
 @Composable
 fun ShimmerEventCard(modifier: Modifier = Modifier) {
     val shimmerColors = listOf(
-        Color.White.copy(alpha = 0.05f),
-        Color.White.copy(alpha = 0.12f),
-        Color.White.copy(alpha = 0.05f),
+        Color.White.copy(alpha = 0.04f),
+        Color.White.copy(alpha = 0.10f),
+        Color.White.copy(alpha = 0.04f),
     )
 
     val transition = rememberInfiniteTransition(label = "shimmer")
     val translateAnim by transition.animateFloat(
         initialValue = 0f,
-        targetValue = 1000f,
+        targetValue = 1200f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 1400, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "shimmerTranslate",
@@ -54,53 +54,53 @@ fun ShimmerEventCard(modifier: Modifier = Modifier) {
 
     val brush = Brush.linearGradient(
         colors = shimmerColors,
-        start = Offset(translateAnim - 200f, 0f),
-        end = Offset(translateAnim + 200f, 0f),
+        start = Offset(translateAnim - 300f, 0f),
+        end = Offset(translateAnim + 300f, 0f),
     )
 
     GlassSurface(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            // Year badge placeholder
-            Box(
-                modifier = Modifier
-                    .width(72.dp)
-                    .height(28.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(brush),
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Title placeholder
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.75f)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(brush),
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Description line 1
+        Column {
+            // Image placeholder
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(14.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .aspectRatio(16f / 9f)
                     .background(brush),
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            // Text content area
+            Column(modifier = Modifier.padding(24.dp)) {
+                // Title placeholder
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.75f)
+                        .height(20.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(brush),
+                )
 
-            // Description line 2
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(14.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(brush),
-            )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Description line 1
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(brush),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Description line 2
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.65f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(brush),
+                )
+            }
         }
     }
 }
@@ -109,9 +109,9 @@ fun ShimmerEventCard(modifier: Modifier = Modifier) {
 fun ShimmerLoadingList(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        repeat(6) {
+        repeat(4) {
             ShimmerEventCard()
         }
     }

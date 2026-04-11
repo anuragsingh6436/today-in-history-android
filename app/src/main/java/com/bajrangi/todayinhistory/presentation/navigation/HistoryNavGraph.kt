@@ -13,13 +13,12 @@ import androidx.navigation.navArgument
 import com.bajrangi.todayinhistory.presentation.detail.DetailScreen
 import com.bajrangi.todayinhistory.presentation.home.HomeScreen
 import com.bajrangi.todayinhistory.presentation.home.HomeViewModel
+import com.bajrangi.todayinhistory.presentation.settings.SettingsScreen
+import com.bajrangi.todayinhistory.presentation.settings.SettingsViewModel
 
 @Composable
 fun HistoryNavGraph() {
     val navController = rememberNavController()
-
-    // Shared ViewModel scoped to the nav graph so Home and Detail
-    // can access the same event list without re-fetching.
     val homeViewModel: HomeViewModel = hiltViewModel()
 
     NavHost(
@@ -36,8 +35,8 @@ fun HistoryNavGraph() {
                 onEventClick = { index ->
                     navController.navigate(Screen.Detail.createRoute(index))
                 },
-                onDatePickerClick = {
-                    // TODO (Step 5): Show date picker bottom sheet
+                onSettingsClick = {
+                    navController.navigate(Screen.Settings.route)
                 },
             )
         }
@@ -53,6 +52,14 @@ fun HistoryNavGraph() {
 
             DetailScreen(
                 event = event,
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(route = Screen.Settings.route) {
+            val settingsViewModel: SettingsViewModel = hiltViewModel()
+            SettingsScreen(
+                viewModel = settingsViewModel,
                 onBack = { navController.popBackStack() },
             )
         }

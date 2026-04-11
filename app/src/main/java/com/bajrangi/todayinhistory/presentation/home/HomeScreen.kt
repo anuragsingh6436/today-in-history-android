@@ -1,9 +1,5 @@
 package com.bajrangi.todayinhistory.presentation.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,9 +20,11 @@ import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bajrangi.todayinhistory.config.FeedMode
 import com.bajrangi.todayinhistory.config.FeatureFlags
@@ -52,28 +51,30 @@ import com.bajrangi.todayinhistory.presentation.theme.IceBlue
 import com.bajrangi.todayinhistory.presentation.theme.PaperFaint
 import com.bajrangi.todayinhistory.presentation.theme.RoseGold
 import kotlinx.coroutines.delay
+import java.time.LocalDate
 import java.time.Month
 import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
+import androidx.compose.animation.core.tween
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
     onEventClick: (Int) -> Unit,
-    onDatePickerClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     AppBackground(modifier = modifier) {
         when (val state = uiState) {
-            is HomeUiState.Loading -> LoadingContent()
-
+            is HomeUiState.Loading -> LoadingContent(onSettingsClick = onSettingsClick)
             is HomeUiState.Success -> {
                 when (FeatureFlags.feedMode) {
                     FeedMode.CARDS -> CardFeedContent(
                         state = state,
                         onEventClick = onEventClick,
+                        onSettingsClick = onSettingsClick,
                         onRefresh = { viewModel.refresh() },
                     )
                     FeedMode.REELS -> ReelFeedContent(
@@ -82,7 +83,6 @@ fun HomeScreen(
                     )
                 }
             }
-
             is HomeUiState.Error -> ErrorContent(
                 state = state,
                 onRetry = { viewModel.loadEvents() },
@@ -94,7 +94,7 @@ fun HomeScreen(
 // ── Loading ─────────────────────────────────────────────────────
 
 @Composable
-private fun LoadingContent() {
+private fun LoadingContent(onSettingsClick: () -> Unit) {
     when (FeatureFlags.feedMode) {
         FeedMode.CARDS -> {
             Column(
@@ -102,7 +102,12 @@ private fun LoadingContent() {
                     .fillMaxSize()
                     .statusBarsPadding(),
             ) {
-                DateHeader(month = 0, day = 0)
+                val today = LocalDate.now()
+                DateHeader(
+                    month = today.monthValue,
+                    day = today.dayOfMonth,
+                    onSettingsClick = onSettingsClick,
+                )
                 ShimmerLoadingList(modifier = Modifier.padding(top = 8.dp))
             }
         }
@@ -120,9 +125,9 @@ private fun LoadingContent() {
 private fun CardFeedContent(
     state: HomeUiState.Success,
     onEventClick: (Int) -> Unit,
+    onSettingsClick: () -> Unit,
     onRefresh: () -> Unit,
 ) {
-    // Preserve scroll position across recompositions
     val listState = rememberLazyListState()
 
     LazyColumn(
@@ -131,7 +136,7 @@ private fun CardFeedContent(
             .fillMaxSize()
             .statusBarsPadding(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item(key = "header") {
             DateHeader(
@@ -140,6 +145,7 @@ private fun CardFeedContent(
                 eventCount = state.events.size,
                 isRefreshing = state.isRefreshing,
                 onRefresh = onRefresh,
+                onSettingsClick = onSettingsClick,
             )
         }
 
@@ -154,7 +160,7 @@ private fun CardFeedContent(
             )
         }
 
-        item(key = "spacer") { Spacer(modifier = Modifier.height(32.dp)) }
+        item(key = "spacer") { Spacer(modifier = Modifier.height(40.dp)) }
     }
 }
 
@@ -202,7 +208,7 @@ private fun ReelFeedContent(
     }
 }
 
-// ── Shared Components ───────────────────────────────────────────
+// ── Header ──────────────────────────────────────────────────────
 
 @Composable
 private fun DateHeader(
@@ -211,6 +217,7 @@ private fun DateHeader(
     eventCount: Int = 0,
     isRefreshing: Boolean = false,
     onRefresh: (() -> Unit)? = null,
+    onSettingsClick: (() -> Unit)? = null,
 ) {
     val monthName = if (month in 1..12) {
         Month.of(month).getDisplayName(JavaTextStyle.FULL, Locale.getDefault())
@@ -219,58 +226,88 @@ private fun DateHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 12.dp, bottom = 8.dp),
+            .padding(top = 8.dp, bottom = 12.dp),
     ) {
-        Text(
-            text = "TODAY IN HISTORY",
-            style = MaterialTheme.typography.labelSmall,
-            color = PaperFaint.copy(alpha = 0.5f),
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
+        // Top row: label + settings
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = if (monthName.isNotEmpty()) "$monthName $day" else "",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Bold,
+                text = "TODAY IN HISTORY",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    letterSpacing = 1.2.sp,
                 ),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = IceBlue.copy(alpha = 0.5f),
             )
 
-            if (onRefresh != null) {
-                IconButton(onClick = onRefresh) {
-                    if (isRefreshing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 1.5.dp,
-                            color = IceBlue.copy(alpha = 0.5f),
-                        )
-                    } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isRefreshing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 1.5.dp,
+                        color = IceBlue.copy(alpha = 0.4f),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                } else if (onRefresh != null) {
+                    IconButton(
+                        onClick = onRefresh,
+                        modifier = Modifier.size(36.dp),
+                    ) {
                         Icon(
                             imageVector = Icons.Rounded.Refresh,
                             contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+
+                if (onSettingsClick != null) {
+                    IconButton(
+                        onClick = onSettingsClick,
+                        modifier = Modifier.size(36.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = Color.White.copy(alpha = 0.04f),
+                        ),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = "Settings",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }
             }
         }
 
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Date — large display
+        Text(
+            text = if (monthName.isNotEmpty()) "$monthName $day" else "",
+            style = MaterialTheme.typography.headlineLarge.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.5).sp,
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+
+        // Event count
         if (eventCount > 0) {
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "$eventCount events on this day",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
             )
         }
     }
 }
+
+// ── Empty & Error ───────────────────────────────────────────────
 
 @Composable
 private fun EmptyContent() {
