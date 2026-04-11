@@ -31,13 +31,13 @@ fun YearWatermark(
     ) {
         Text(
             text = "$year",
-            fontSize = 180.sp,
+            fontSize = 100.sp,
             fontWeight = FontWeight.Black,
             color = Paper,
-            letterSpacing = (-8).sp,
+            letterSpacing = (-4).sp,
             modifier = Modifier
-                .alpha(0.04f) // Even subtler — barely perceptible
-                .offset(y = (-80).dp),
+                .alpha(0.05f)
+                .offset(y = (-120).dp), // Pushed well above content
         )
     }
 }
