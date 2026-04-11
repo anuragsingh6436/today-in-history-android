@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="330dp"
+    android:height="186dp"
+    android:viewportWidth="330"
+    android:viewportHeight="186">
+
+    <!-- Background -->
+    <path
+        android:fillColor="#121A36"
+        android:pathData="M0,0h330v186H0z" />
+
+    <!-- Subtle grid lines (historical feel) -->
+    <path
+        android:strokeColor="#1A2240"
+        android:strokeWidth="0.5"
+        android:pathData="M0,46h330 M0,93h330 M0,140h330 M82,0v186 M165,0v186 M248,0v186" />
+
+    <!-- Scroll/document icon -->
+    <path
+        android:fillColor="#1A2240"
+        android:pathData="M135,58 C135,54 138,51 142,51 L188,51 C192,51 195,54 195,58 L195,128 C195,132 192,135 188,135 L142,135 C138,135 135,132 135,128 Z" />
+
+    <!-- Document lines -->
+    <path
+        android:strokeColor="#26305A"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M148,70h34 M148,82h28 M148,94h32 M148,106h20" />
+
+    <!-- Clock accent (history = time) -->
+    <path
+        android:fillColor="#26305A"
+        android:pathData="M165,118 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0" />
+    <path
+        android:strokeColor="#7FD8FF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M165,114v4h3"
+        android:fillColor="#00000000" />
+</vector>
