@@ -17,7 +17,7 @@ object FeatureFlags {
      * CARDS → Scrollable card feed (Google Discover style)
      * REELS → Full-screen vertical pager (TikTok style)
      */
-    var feedMode: FeedMode = FeedMode.CARDS
+    var feedMode: FeedMode = FeedMode.REELS
 }
 
 enum class FeedMode {
