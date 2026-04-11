@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,21 +25,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-/**
- * Shimmer card matching the actual EventCard layout:
- * - Image placeholder (16:9)
- * - Year pill placeholder
- * - Title bar
- * - Description bars
- */
 @Composable
-fun ShimmerEventCard(modifier: Modifier = Modifier) {
-    val shimmerColors = listOf(
-        Color.White.copy(alpha = 0.04f),
-        Color.White.copy(alpha = 0.10f),
-        Color.White.copy(alpha = 0.04f),
-    )
-
+private fun rememberShimmerBrush(): Brush {
     val transition = rememberInfiniteTransition(label = "shimmer")
     val translateAnim by transition.animateFloat(
         initialValue = 0f,
@@ -52,36 +38,42 @@ fun ShimmerEventCard(modifier: Modifier = Modifier) {
         label = "shimmerTranslate",
     )
 
-    val brush = Brush.linearGradient(
-        colors = shimmerColors,
+    return Brush.linearGradient(
+        colors = listOf(
+            Color.White.copy(alpha = 0.03f),
+            Color.White.copy(alpha = 0.08f),
+            Color.White.copy(alpha = 0.03f),
+        ),
         start = Offset(translateAnim - 300f, 0f),
         end = Offset(translateAnim + 300f, 0f),
     )
+}
+
+@Composable
+fun ShimmerEventCard(
+    isFeatured: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val brush = rememberShimmerBrush()
 
     GlassSurface(modifier = modifier.fillMaxWidth()) {
         Column {
-            // Image placeholder
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(16f / 9f)
+                    .aspectRatio(if (isFeatured) 4f / 3f else 16f / 9f)
                     .background(brush),
             )
 
-            // Text content area
             Column(modifier = Modifier.padding(24.dp)) {
-                // Title placeholder
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.75f)
+                        .fillMaxWidth(0.7f)
                         .height(20.dp)
                         .clip(RoundedCornerShape(6.dp))
                         .background(brush),
                 )
-
                 Spacer(modifier = Modifier.height(12.dp))
-
-                // Description line 1
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -89,13 +81,10 @@ fun ShimmerEventCard(modifier: Modifier = Modifier) {
                         .clip(RoundedCornerShape(4.dp))
                         .background(brush),
                 )
-
                 Spacer(modifier = Modifier.height(8.dp))
-
-                // Description line 2
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.65f)
+                        .fillMaxWidth(0.6f)
                         .height(14.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .background(brush),
@@ -108,11 +97,11 @@ fun ShimmerEventCard(modifier: Modifier = Modifier) {
 @Composable
 fun ShimmerLoadingList(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        repeat(4) {
-            ShimmerEventCard()
-        }
+        ShimmerEventCard(isFeatured = true)
+        ShimmerEventCard()
+        ShimmerEventCard()
     }
 }

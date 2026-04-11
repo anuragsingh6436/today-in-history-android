@@ -100,7 +100,8 @@ private fun LoadingContent(onSettingsClick: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding(),
+                    .statusBarsPadding()
+                    .padding(horizontal = 24.dp),
             ) {
                 val today = LocalDate.now()
                 DateHeader(
@@ -108,7 +109,7 @@ private fun LoadingContent(onSettingsClick: () -> Unit) {
                     day = today.dayOfMonth,
                     onSettingsClick = onSettingsClick,
                 )
-                ShimmerLoadingList(modifier = Modifier.padding(top = 8.dp))
+                ShimmerLoadingList(modifier = Modifier.padding(top = 12.dp))
             }
         }
         FeedMode.REELS -> {
@@ -135,8 +136,8 @@ private fun CardFeedContent(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item(key = "header") {
             DateHeader(
@@ -226,7 +227,7 @@ private fun DateHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 12.dp),
+            .padding(top = 12.dp, bottom = 16.dp),
     ) {
         // Top row: label + settings
         Row(
@@ -237,9 +238,10 @@ private fun DateHeader(
             Text(
                 text = "TODAY IN HISTORY",
                 style = MaterialTheme.typography.labelSmall.copy(
-                    letterSpacing = 1.2.sp,
+                    letterSpacing = 1.5.sp,
+                    fontWeight = FontWeight.SemiBold,
                 ),
-                color = IceBlue.copy(alpha = 0.5f),
+                color = IceBlue.copy(alpha = 0.45f),
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -283,27 +285,29 @@ private fun DateHeader(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Date — large display
         Text(
             text = if (monthName.isNotEmpty()) "$monthName $day" else "",
-            style = MaterialTheme.typography.headlineLarge.copy(
+            style = MaterialTheme.typography.displaySmall.copy(
                 fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.5).sp,
+                letterSpacing = (-1).sp,
             ),
             color = MaterialTheme.colorScheme.onSurface,
         )
 
         // Event count
         if (eventCount > 0) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "$eventCount events on this day",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
             )
         }
+
+        Spacer(modifier = Modifier.height(4.dp))
     }
 }
 
