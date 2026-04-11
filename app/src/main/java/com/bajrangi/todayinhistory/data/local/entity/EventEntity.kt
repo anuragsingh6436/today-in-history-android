@@ -4,12 +4,6 @@ import androidx.room.Entity
 import com.bajrangi.todayinhistory.data.remote.dto.EventDto
 import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
 
-/**
- * Room entity for cached historical events.
- *
- * Composite primary key on (year, month, day, title) prevents duplicates
- * — mirrors the backend's UNIQUE constraint.
- */
 @Entity(
     tableName = "events",
     primaryKeys = ["year", "month", "day", "title"],
@@ -21,8 +15,8 @@ data class EventEntity(
     val title: String,
     val description: String,
     val wikipediaUrl: String = "",
+    val thumbnailUrl: String = "",
     val aiSummary: String = "",
-    /** Epoch millis when this row was last refreshed from the API. */
     val cachedAt: Long = System.currentTimeMillis(),
 )
 
@@ -31,6 +25,7 @@ fun EventEntity.toDomain() = HistoricalEvent(
     title = title,
     description = description,
     wikipediaUrl = wikipediaUrl,
+    thumbnailUrl = thumbnailUrl,
     aiSummary = aiSummary,
     month = month,
     day = day,
@@ -43,5 +38,6 @@ fun EventDto.toEntity() = EventEntity(
     title = title,
     description = description,
     wikipediaUrl = wikipediaUrl,
+    thumbnailUrl = thumbnailUrl,
     aiSummary = aiSummary,
 )

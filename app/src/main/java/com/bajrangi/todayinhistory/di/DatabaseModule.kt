@@ -22,7 +22,8 @@ object DatabaseModule {
             context,
             HistoryDatabase::class.java,
             "history_db",
-        ).build()
+        ).fallbackToDestructiveMigration()
+         .build()
     }
 
     @Provides

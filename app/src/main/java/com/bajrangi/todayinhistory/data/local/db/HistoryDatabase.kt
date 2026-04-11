@@ -7,7 +7,7 @@ import com.bajrangi.todayinhistory.data.local.entity.EventEntity
 
 @Database(
     entities = [EventEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class HistoryDatabase : RoomDatabase() {

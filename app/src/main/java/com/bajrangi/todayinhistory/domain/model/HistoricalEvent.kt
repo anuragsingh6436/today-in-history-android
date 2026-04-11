@@ -9,6 +9,7 @@ data class HistoricalEvent(
     val title: String,
     val description: String,
     val wikipediaUrl: String = "",
+    val thumbnailUrl: String = "",
     val aiSummary: String = "",
     val month: Int = 0,
     val day: Int = 0,

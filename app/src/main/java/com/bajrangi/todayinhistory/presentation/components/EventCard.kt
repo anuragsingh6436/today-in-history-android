@@ -6,9 +6,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,10 +27,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
 import com.bajrangi.todayinhistory.presentation.theme.EraAncientMuted
 import com.bajrangi.todayinhistory.presentation.theme.EraCurrentMuted
@@ -36,7 +42,6 @@ import com.bajrangi.todayinhistory.presentation.theme.EraModernMuted
 import com.bajrangi.todayinhistory.presentation.theme.YearAmberMuted
 import kotlinx.coroutines.delay
 
-/** Muted era colors — they support the text, not compete with it. */
 private fun eraColor(year: Int) = when {
     year < 1500 -> EraAncientMuted
     year < 1900 -> YearAmberMuted
@@ -45,14 +50,10 @@ private fun eraColor(year: Int) = when {
 }
 
 /**
- * Content-grade event card.
+ * Event card with optional hero image.
  *
- * Upgrades from game-UI version:
- *   - 28dp padding (editorial breathing room)
- *   - Calm fade entrance (no bouncy spring — this isn't a game)
- *   - Muted era colors (support hierarchy, don't shout)
- *   - Subtle press scale (0.98f — barely perceptible, premium feel)
- *   - 4-line description (more content visible before tapping)
+ * Cards WITH images: image fills the top, text overlays at bottom
+ * Cards WITHOUT images: clean text-only glass card
  */
 @Composable
 fun EventCard(
@@ -64,7 +65,7 @@ fun EventCard(
     var visible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        delay(index * 50L) // Faster stagger — 50ms feels smoother
+        delay(index * 50L)
         visible = true
     }
 
@@ -72,39 +73,84 @@ fun EventCard(
         visible = visible,
         enter = fadeIn(animationSpec = tween(500, easing = FastOutSlowInEasing)) +
             slideInVertically(
-                initialOffsetY = { it / 6 }, // Shorter slide — subtler
+                initialOffsetY = { it / 6 },
                 animationSpec = tween(500, easing = FastOutSlowInEasing),
             ),
     ) {
-        GlassSurface(
-            modifier = modifier
-                .fillMaxWidth()
-                .pressScale(pressedScale = 0.98f, onClick = onClick),
-        ) {
-            Column(modifier = Modifier.padding(28.dp)) {
-                // Era-coded year
-                val yearColor = eraColor(event.year)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(
-                        modifier = Modifier
-                            .width(4.dp)
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(yearColor.copy(alpha = 0.7f)),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "${event.year}",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
+        if (event.thumbnailUrl.isNotBlank()) {
+            ImageEventCard(event = event, onClick = onClick, modifier = modifier)
+        } else {
+            TextOnlyEventCard(event = event, onClick = onClick, modifier = modifier)
+        }
+    }
+}
+
+/**
+ * Card with hero image — image fills top, text overlays at bottom.
+ * Google Discover / Apple News style.
+ */
+@Composable
+private fun ImageEventCard(
+    event: HistoricalEvent,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val yearColor = eraColor(event.year)
+
+    GlassSurface(
+        modifier = modifier
+            .fillMaxWidth()
+            .pressScale(pressedScale = 0.98f, onClick = onClick),
+    ) {
+        Column {
+            // Hero image with gradient overlay
+            Box {
+                AsyncImage(
+                    model = event.thumbnailUrl,
+                    contentDescription = event.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(16f / 9f)
+                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                )
+
+                // Bottom gradient over image for readability
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color(0xFF070B1C).copy(alpha = 0.4f),
+                                ),
+                            ),
                         ),
-                        color = yearColor,
-                    )
-                }
+                )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                // Year badge on image
+                Text(
+                    text = "${event.year}",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    color = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(16.dp)
+                        .background(
+                            Color.Black.copy(alpha = 0.4f),
+                            RoundedCornerShape(8.dp),
+                        )
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+            }
 
-                // Title — SemiBold, not Bold (calmer)
+            // Text content below image
+            Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = event.title,
                     style = MaterialTheme.typography.titleLarge,
@@ -113,17 +159,74 @@ fun EventCard(
                     overflow = TextOverflow.Ellipsis,
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Description — 4 lines visible, generous line height
                 Text(
                     text = event.aiSummary.ifBlank { event.description },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    maxLines = 4,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+    }
+}
+
+/**
+ * Text-only card for events without images.
+ */
+@Composable
+private fun TextOnlyEventCard(
+    event: HistoricalEvent,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val yearColor = eraColor(event.year)
+
+    GlassSurface(
+        modifier = modifier
+            .fillMaxWidth()
+            .pressScale(pressedScale = 0.98f, onClick = onClick),
+    ) {
+        Column(modifier = Modifier.padding(28.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(yearColor.copy(alpha = 0.7f)),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${event.year}",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    color = yearColor,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = event.title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = event.aiSummary.ifBlank { event.description },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
