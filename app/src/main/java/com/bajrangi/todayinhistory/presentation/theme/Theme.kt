@@ -1,5 +1,6 @@
 package com.bajrangi.todayinhistory.presentation.theme
 
+import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,13 +10,13 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-
-// ═══════════════════════════════════════════════════════════════
-// Aurora Color Schemes — extracted from XOMaster & SudokuPro
-// ═══════════════════════════════════════════════════════════════
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
     primary = IceBlue,
@@ -63,10 +64,10 @@ private val LightColorScheme = lightColorScheme(
     outlineVariant = Color(0xFFEFE3D6),
 )
 
-/**
- * Provides glass-surface colors that adapt to the current theme.
- * Consumed by GlassSurface and other premium components.
- */
+// Navigation bar tint (matches XOMaster)
+private val NavBarDark = Color(0xFF080E22)
+private val NavBarLight = Color(0xFFFFF1EA)
+
 data class GlassColors(
     val fill: Color,
     val border: Color,
@@ -96,6 +97,22 @@ fun TodayInHistoryTheme(
         GlassColors(GlassFillDark, GlassBorderDark, GlassInnerDark)
     } else {
         GlassColors(GlassFillLight, GlassBorderLight, GlassInnerLight)
+    }
+
+    // ── System bar appearance (from XOMaster) ───────────────
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            // Transparent status bar
+            window.statusBarColor = Color.Transparent.toArgb()
+            // Tinted nav bar matching the theme edge
+            window.navigationBarColor = (if (darkTheme) NavBarDark else NavBarLight).toArgb()
+            // Light/dark icons on status bar and nav bar
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !darkTheme
+            controller.isAppearanceLightNavigationBars = !darkTheme
+        }
     }
 
     CompositionLocalProvider(LocalGlassColors provides glassColors) {

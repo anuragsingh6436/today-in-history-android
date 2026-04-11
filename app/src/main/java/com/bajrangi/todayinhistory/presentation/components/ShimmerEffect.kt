@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,9 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 private fun rememberShimmerBrush(): Brush {
+    val isDark = isSystemInDarkTheme()
+    val shimmerColor = if (isDark) Color.White else Color.Black
+
     val transition = rememberInfiniteTransition(label = "shimmer")
     val translateAnim by transition.animateFloat(
         initialValue = 0f,
@@ -40,9 +44,9 @@ private fun rememberShimmerBrush(): Brush {
 
     return Brush.linearGradient(
         colors = listOf(
-            Color.White.copy(alpha = 0.03f),
-            Color.White.copy(alpha = 0.08f),
-            Color.White.copy(alpha = 0.03f),
+            shimmerColor.copy(alpha = 0.03f),
+            shimmerColor.copy(alpha = 0.08f),
+            shimmerColor.copy(alpha = 0.03f),
         ),
         start = Offset(translateAnim - 300f, 0f),
         end = Offset(translateAnim + 300f, 0f),
