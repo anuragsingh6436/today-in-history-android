@@ -80,6 +80,7 @@ fun HomeScreen(
                     FeedMode.REELS -> ReelFeedContent(
                         state = state,
                         onEventClick = onEventClick,
+                        onSettingsClick = onSettingsClick,
                     )
                 }
             }
@@ -171,6 +172,7 @@ private fun CardFeedContent(
 private fun ReelFeedContent(
     state: HomeUiState.Success,
     onEventClick: (Int) -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     if (state.events.isEmpty()) {
         EmptyContent()
@@ -204,6 +206,26 @@ private fun ReelFeedContent(
                 totalPages = state.events.size,
                 isCurrentPage = pagerState.currentPage == page,
                 onClick = { onEventClick(page) },
+            )
+        }
+
+        // Settings icon — top right
+        IconButton(
+            onClick = onSettingsClick,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(end = 12.dp, top = 12.dp)
+                .size(40.dp),
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Settings,
+                contentDescription = "Settings",
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                modifier = Modifier.size(20.dp),
             )
         }
     }
@@ -271,7 +293,7 @@ private fun DateHeader(
                         onClick = onSettingsClick,
                         modifier = Modifier.size(36.dp),
                         colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = Color.White.copy(alpha = 0.04f),
+                            containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
                         ),
                     ) {
                         Icon(
@@ -323,13 +345,13 @@ private fun EmptyContent() {
             Text(
                 text = "No events found",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "Nothing recorded for this date yet.",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.3f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
             )
         }
     }

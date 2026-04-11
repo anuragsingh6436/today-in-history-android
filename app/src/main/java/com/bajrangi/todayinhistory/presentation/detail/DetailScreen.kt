@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,6 +67,8 @@ import com.bajrangi.todayinhistory.presentation.theme.EraCurrentMuted
 import com.bajrangi.todayinhistory.presentation.theme.EraModernMuted
 import com.bajrangi.todayinhistory.presentation.theme.IceBlue
 import com.bajrangi.todayinhistory.presentation.theme.PaperFaint
+import com.bajrangi.todayinhistory.presentation.theme.ScrimDark
+import com.bajrangi.todayinhistory.presentation.theme.ScrimLight
 import com.bajrangi.todayinhistory.presentation.theme.YearAmberMuted
 import com.bajrangi.todayinhistory.presentation.components.pressScale
 import kotlinx.coroutines.delay
@@ -120,6 +123,8 @@ fun DetailScreen(
 
     val context = LocalContext.current
     val yearColor = eraColor(event.year)
+    val isDark = isSystemInDarkTheme()
+    val scrim = if (isDark) ScrimDark else ScrimLight
 
     AppBackground {
         Column(
@@ -182,7 +187,7 @@ fun DetailScreen(
                             .background(
                                 Brush.verticalGradient(
                                     colors = listOf(
-                                        Color(0xFF070B1C).copy(alpha = 0.6f),
+                                        scrim.copy(alpha = 0.6f),
                                         Color.Transparent,
                                     ),
                                 ),
@@ -199,8 +204,8 @@ fun DetailScreen(
                                 Brush.verticalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        Color(0xFF070B1C).copy(alpha = 0.7f),
-                                        Color(0xFF070B1C),
+                                        scrim.copy(alpha = 0.7f),
+                                        scrim,
                                     ),
                                 ),
                             ),
@@ -213,13 +218,13 @@ fun DetailScreen(
                             .statusBarsPadding()
                             .padding(start = 8.dp, top = 8.dp),
                         colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = Color.Black.copy(alpha = 0.3f),
+                            containerColor = scrim.copy(alpha = 0.4f),
                         ),
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
 
@@ -240,7 +245,7 @@ fun DetailScreen(
                         Text(
                             text = eraLabel(event.year),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.6f),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
@@ -249,7 +254,7 @@ fun DetailScreen(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.8.sp,
                             ),
-                            color = Color.White.copy(alpha = 0.9f),
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .background(
                                     yearColor.copy(alpha = 0.6f),

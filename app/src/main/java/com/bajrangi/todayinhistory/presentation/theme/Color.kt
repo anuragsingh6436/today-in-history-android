@@ -75,6 +75,11 @@ val EraAncientMuted = Color(0xFF9B88C4)   // Softer purple
 val EraModernMuted  = Color(0xFF6FAEC8)   // Calmer blue
 val EraCurrentMuted = Color(0xFF8AC4B0)   // Quieter mint
 
+// ── Image overlay scrims (theme-aware) ──────────────────────────
+// Use these instead of hardcoded Color(0xFF070B1C) so light mode works.
+val ScrimDark  = Color(0xFF070B1C)   // Dark mode image overlay
+val ScrimLight = Color(0xFFFFFAF4)   // Light mode image overlay
+
 // ── Confetti Palette ────────────────────────────────────────────
 val ConfettiPalette = listOf(
     IceBlue, IceBlueDeep, RoseGold, RoseGoldDeep,

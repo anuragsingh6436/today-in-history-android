@@ -2,6 +2,7 @@ package com.bajrangi.todayinhistory.presentation.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,8 @@ import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
 import com.bajrangi.todayinhistory.presentation.theme.EraAncientMuted
 import com.bajrangi.todayinhistory.presentation.theme.EraCurrentMuted
 import com.bajrangi.todayinhistory.presentation.theme.EraModernMuted
+import com.bajrangi.todayinhistory.presentation.theme.ScrimDark
+import com.bajrangi.todayinhistory.presentation.theme.ScrimLight
 import com.bajrangi.todayinhistory.presentation.theme.YearAmberMuted
 
 private fun eraColor(year: Int) = when {
@@ -54,17 +57,6 @@ private fun eraLabel(year: Int) = when {
     else        -> "Contemporary"
 }
 
-/**
- * Elite event card.
- *
- * Index 0 = featured card (taller image, bigger title).
- * All others = standard card.
- *
- * Both variants have:
- *   - Dual vignette on image (top + bottom) for depth
- *   - Era-colored pill year badge
- *   - Time period dot + label below content
- */
 @Composable
 fun EventCard(
     event: HistoricalEvent,
@@ -73,9 +65,10 @@ fun EventCard(
     modifier: Modifier = Modifier,
 ) {
     val isFeatured = index == 0
-
     val context = LocalContext.current
     val yearColor = eraColor(event.year)
+    val isDark = isSystemInDarkTheme()
+    val scrim = if (isDark) ScrimDark else ScrimLight
 
     GlassSurface(
         modifier = modifier
@@ -105,7 +98,7 @@ fun EventCard(
                     PlaceholderImage()
                 }
 
-                // Top vignette — subtle depth from above
+                // Top vignette
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -114,14 +107,14 @@ fun EventCard(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color(0xFF070B1C).copy(alpha = 0.3f),
+                                    scrim.copy(alpha = 0.3f),
                                     Color.Transparent,
                                 ),
                             ),
                         ),
                 )
 
-                // Bottom vignette — reading zone
+                // Bottom vignette
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -131,7 +124,7 @@ fun EventCard(
                             Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color(0xFF070B1C).copy(alpha = 0.5f),
+                                    scrim.copy(alpha = 0.5f),
                                 ),
                             ),
                         ),
@@ -144,7 +137,7 @@ fun EventCard(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.8.sp,
                     ),
-                    color = Color.White,
+                    color = if (isDark) Color.White else Color.White,
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(14.dp)
@@ -165,7 +158,6 @@ fun EventCard(
                     bottom = 20.dp,
                 ),
             ) {
-                // Title
                 Text(
                     text = event.title,
                     style = if (isFeatured) {
@@ -180,7 +172,6 @@ fun EventCard(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Description
                 Text(
                     text = event.aiSummary.ifBlank { event.description },
                     style = MaterialTheme.typography.bodyMedium,
@@ -191,10 +182,8 @@ fun EventCard(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Era tag — subtle bottom line
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+                // Era tag
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
                             .size(5.dp)

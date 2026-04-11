@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +51,8 @@ import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
 import com.bajrangi.todayinhistory.presentation.theme.EraAncientMuted
 import com.bajrangi.todayinhistory.presentation.theme.EraCurrentMuted
 import com.bajrangi.todayinhistory.presentation.theme.EraModernMuted
+import com.bajrangi.todayinhistory.presentation.theme.ScrimDark
+import com.bajrangi.todayinhistory.presentation.theme.ScrimLight
 import com.bajrangi.todayinhistory.presentation.theme.YearAmberMuted
 import kotlinx.coroutines.delay
 
@@ -67,17 +70,6 @@ private fun eraLabel(year: Int) = when {
     else        -> "Contemporary"
 }
 
-/**
- * Full-screen reel page — immersive, image-driven.
- *
- * Structure:
- *   - Hero image fills entire screen (or placeholder)
- *   - Dual vignette (top + bottom) for depth
- *   - Content floats at the bottom over gradient
- *   - Era tag + year pill on image
- *   - Title as hero, description below
- *   - Page counter as whisper
- */
 @Composable
 fun ReelPage(
     event: HistoricalEvent,
@@ -90,6 +82,11 @@ fun ReelPage(
     var contentVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val yearColor = eraColor(event.year)
+    val isDark = isSystemInDarkTheme()
+    val scrim = if (isDark) ScrimDark else ScrimLight
+    val textPrimary = if (isDark) Color.White else Color(0xFF1B1F36)
+    val textSecondary = if (isDark) Color.White.copy(alpha = 0.7f) else Color(0xFF1B1F36).copy(alpha = 0.7f)
+    val textTertiary = if (isDark) Color.White.copy(alpha = 0.5f) else Color(0xFF1B1F36).copy(alpha = 0.5f)
 
     LaunchedEffect(isCurrentPage) {
         if (isCurrentPage) {
@@ -118,33 +115,14 @@ fun ReelPage(
                 contentDescription = event.title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                loading = {
-                    Image(
-                        painter = painterResource(R.drawable.placeholder_history),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                },
-                error = {
-                    Image(
-                        painter = painterResource(R.drawable.placeholder_history),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                },
+                loading = { PlaceholderFull() },
+                error = { PlaceholderFull() },
             )
         } else {
-            Image(
-                painter = painterResource(R.drawable.placeholder_history),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
+            PlaceholderFull()
         }
 
-        // ── Top vignette (subtle depth from above) ──────────
+        // ── Top vignette ────────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -153,14 +131,14 @@ fun ReelPage(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF070B1C).copy(alpha = 0.5f),
+                            scrim.copy(alpha = 0.5f),
                             Color.Transparent,
                         ),
                     ),
                 ),
         )
 
-        // ── Bottom vignette (reading zone) ──────────────────
+        // ── Bottom vignette ─────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -170,10 +148,10 @@ fun ReelPage(
                     Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            Color(0xFF070B1C).copy(alpha = 0.4f),
-                            Color(0xFF070B1C).copy(alpha = 0.8f),
-                            Color(0xFF070B1C).copy(alpha = 0.95f),
-                            Color(0xFF070B1C),
+                            scrim.copy(alpha = 0.4f),
+                            scrim.copy(alpha = 0.8f),
+                            scrim.copy(alpha = 0.95f),
+                            scrim,
                         ),
                     ),
                 ),
@@ -209,7 +187,7 @@ fun ReelPage(
                         Text(
                             text = eraLabel(event.year),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.5f),
+                            color = textTertiary,
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
@@ -218,7 +196,7 @@ fun ReelPage(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.8.sp,
                             ),
-                            color = Color.White,
+                            color = textPrimary,
                             modifier = Modifier
                                 .background(
                                     yearColor.copy(alpha = 0.6f),
@@ -230,7 +208,7 @@ fun ReelPage(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Title — hero text
+                    // Title
                     Text(
                         text = event.title,
                         style = MaterialTheme.typography.headlineMedium.copy(
@@ -238,7 +216,7 @@ fun ReelPage(
                             lineHeight = 34.sp,
                             letterSpacing = (-0.3).sp,
                         ),
-                        color = Color.White,
+                        color = textPrimary,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -251,7 +229,7 @@ fun ReelPage(
                         style = MaterialTheme.typography.bodyLarge.copy(
                             lineHeight = 28.sp,
                         ),
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = textSecondary,
                         maxLines = 4,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -262,10 +240,20 @@ fun ReelPage(
                     Text(
                         text = "${pageIndex + 1} of $totalPages",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.2f),
+                        color = textTertiary.copy(alpha = 0.4f),
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun PlaceholderFull(modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(R.drawable.placeholder_history),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = modifier.fillMaxSize(),
+    )
 }
