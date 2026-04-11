@@ -27,7 +27,9 @@ android {
     buildTypes {
         debug {
             // Point to local server during development.
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000\"")
+            // Use your Mac's local IP for physical device testing.
+            // For emulator use 10.0.2.2 instead.
+            buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.4:8000\"")
         }
         release {
             isMinifyEnabled = true
