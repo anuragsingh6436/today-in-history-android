@@ -77,10 +77,7 @@ fun ReelPage(
                 onClick = onClick,
             ),
     ) {
-        // ── Background: giant year watermark ────────────────
-        YearWatermark(year = event.year)
-
-        // ── Bottom gradient veil (taller = more reading area) ──
+        // ── Bottom gradient veil ────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
