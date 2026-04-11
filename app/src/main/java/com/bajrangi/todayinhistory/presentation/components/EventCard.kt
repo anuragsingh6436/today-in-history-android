@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,11 +31,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
 import com.bajrangi.todayinhistory.presentation.theme.EraAncientMuted
 import com.bajrangi.todayinhistory.presentation.theme.EraCurrentMuted
@@ -49,12 +51,6 @@ private fun eraColor(year: Int) = when {
     else        -> EraCurrentMuted
 }
 
-/**
- * Event card with optional hero image.
- *
- * Cards WITH images: image fills the top, text overlays at bottom
- * Cards WITHOUT images: clean text-only glass card
- */
 @Composable
 fun EventCard(
     event: HistoricalEvent,
@@ -85,17 +81,13 @@ fun EventCard(
     }
 }
 
-/**
- * Card with hero image — image fills top, text overlays at bottom.
- * Google Discover / Apple News style.
- */
 @Composable
 private fun ImageEventCard(
     event: HistoricalEvent,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val yearColor = eraColor(event.year)
+    val context = LocalContext.current
 
     GlassSurface(
         modifier = modifier
@@ -103,19 +95,55 @@ private fun ImageEventCard(
             .pressScale(pressedScale = 0.98f, onClick = onClick),
     ) {
         Column {
-            // Hero image with gradient overlay
-            Box {
-                AsyncImage(
-                    model = event.thumbnailUrl,
+            // Hero image
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f),
+            ) {
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(event.thumbnailUrl)
+                        .crossfade(300)
+                        .build(),
                     contentDescription = event.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(16f / 9f)
-                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                    modifier = Modifier.fillMaxSize(),
+                    loading = {
+                        // Shimmer placeholder while loading
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                        )
+                    },
+                    error = {
+                        // Fallback on error — show colored background
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            eraColor(event.year).copy(alpha = 0.15f),
+                                            MaterialTheme.colorScheme.surfaceVariant,
+                                        ),
+                                    ),
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "${event.year}",
+                                style = MaterialTheme.typography.displaySmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                ),
+                                color = eraColor(event.year).copy(alpha = 0.3f),
+                            )
+                        }
+                    },
                 )
 
-                // Bottom gradient over image for readability
+                // Bottom gradient over image
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -149,7 +177,7 @@ private fun ImageEventCard(
                 )
             }
 
-            // Text content below image
+            // Text content
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = event.title,
@@ -173,9 +201,6 @@ private fun ImageEventCard(
     }
 }
 
-/**
- * Text-only card for events without images.
- */
 @Composable
 private fun TextOnlyEventCard(
     event: HistoricalEvent,
