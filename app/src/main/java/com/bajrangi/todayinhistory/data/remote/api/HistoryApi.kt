@@ -21,9 +21,9 @@ interface HistoryApi {
 
     @GET("api/events/{month}/{day}")
     suspend fun getEventsByDate(
-        @Query("skip") skip: Int = 0,
-        @Query("limit") limit: Int = 100,
         @Path("month") month: Int,
         @Path("day") day: Int,
+        @Query("skip") skip: Int = 0,
+        @Query("limit") limit: Int = 100,
     ): EventListResponse
 }
