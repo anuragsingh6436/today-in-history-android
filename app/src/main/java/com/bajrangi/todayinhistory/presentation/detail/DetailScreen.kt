@@ -7,9 +7,14 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,15 +23,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,32 +45,48 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
+import com.bajrangi.todayinhistory.R
 import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
 import com.bajrangi.todayinhistory.presentation.components.AppBackground
+import com.bajrangi.todayinhistory.presentation.components.GlassSurface
 import com.bajrangi.todayinhistory.presentation.components.GlassSurfaceAccent
+import com.bajrangi.todayinhistory.presentation.theme.EraAncientMuted
+import com.bajrangi.todayinhistory.presentation.theme.EraCurrentMuted
+import com.bajrangi.todayinhistory.presentation.theme.EraModernMuted
 import com.bajrangi.todayinhistory.presentation.theme.IceBlue
 import com.bajrangi.todayinhistory.presentation.theme.PaperFaint
 import com.bajrangi.todayinhistory.presentation.theme.YearAmberMuted
+import com.bajrangi.todayinhistory.presentation.components.pressScale
 import kotlinx.coroutines.delay
 import java.time.Month
 import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
 
-/**
- * Detail screen — editorial reading experience.
- *
- * Content-first upgrades:
- *   - 32dp horizontal margins (matches editorial standards)
- *   - 80sp year hero (architectural, not decorative)
- *   - Section labels at 30% alpha (utility, not chrome)
- *   - 17sp body text with 30sp line height (reading-optimized)
- *   - Calmer entrance animation (700ms, FastOutSlowIn)
- *   - Accent glass tinted with muted amber (barely perceptible)
- */
+private fun eraColor(year: Int) = when {
+    year < 1500 -> EraAncientMuted
+    year < 1900 -> YearAmberMuted
+    year < 2000 -> EraModernMuted
+    else        -> EraCurrentMuted
+}
+
+private fun eraLabel(year: Int) = when {
+    year < 1500 -> "Ancient"
+    year < 1900 -> "Pre-Modern"
+    year < 2000 -> "Modern Era"
+    else        -> "Contemporary"
+}
+
 @Composable
 fun DetailScreen(
     event: HistoricalEvent?,
@@ -81,52 +106,190 @@ fun DetailScreen(
         return
     }
 
-    var headerVisible by remember { mutableStateOf(false) }
+    var heroVisible by remember { mutableStateOf(false) }
+    var titleVisible by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        headerVisible = true
-        delay(250)
+        heroVisible = true
+        delay(200)
+        titleVisible = true
+        delay(200)
         contentVisible = true
     }
 
     val context = LocalContext.current
+    val yearColor = eraColor(event.year)
 
     AppBackground {
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .statusBarsPadding()
                 .verticalScroll(rememberScrollState()),
         ) {
-            // ── Back button ─────────────────────────────────
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.padding(start = 12.dp, top = 12.dp),
+            // ── Hero Image Section ──────────────────────────
+            AnimatedVisibility(
+                visible = heroVisible,
+                enter = fadeIn(tween(700, easing = FastOutSlowInEasing)),
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(4f / 3f),
+                ) {
+                    // Image
+                    if (event.thumbnailUrl.isNotBlank()) {
+                        SubcomposeAsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(event.thumbnailUrl)
+                                .crossfade(400)
+                                .build(),
+                            contentDescription = event.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                            loading = {
+                                Image(
+                                    painter = painterResource(R.drawable.placeholder_history),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            },
+                            error = {
+                                Image(
+                                    painter = painterResource(R.drawable.placeholder_history),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            },
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(R.drawable.placeholder_history),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+
+                    // Top gradient (for back button readability)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0xFF070B1C).copy(alpha = 0.6f),
+                                        Color.Transparent,
+                                    ),
+                                ),
+                            ),
+                    )
+
+                    // Bottom gradient (blends into content)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color(0xFF070B1C).copy(alpha = 0.7f),
+                                        Color(0xFF070B1C),
+                                    ),
+                                ),
+                            ),
+                    )
+
+                    // Back button
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .statusBarsPadding()
+                            .padding(start = 8.dp, top = 8.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = Color.Black.copy(alpha = 0.3f),
+                        ),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White,
+                        )
+                    }
+
+                    // Era + Year badge on image (bottom-left)
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 28.dp, bottom = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(yearColor),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = eraLabel(event.year),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.6f),
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "${event.year}",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp,
+                            ),
+                            color = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier
+                                .background(
+                                    yearColor.copy(alpha = 0.6f),
+                                    RoundedCornerShape(16.dp),
+                                )
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                        )
+                    }
+                }
             }
 
-            // ── Hero header ─────────────────────────────────
+            // ── Title Section ───────────────────────────────
             AnimatedVisibility(
-                visible = headerVisible,
-                enter = fadeIn(tween(600, easing = FastOutSlowInEasing)) +
+                visible = titleVisible,
+                enter = fadeIn(tween(500, easing = FastOutSlowInEasing)) +
                     slideInVertically(
-                        initialOffsetY = { -it / 5 },
-                        animationSpec = tween(600, easing = FastOutSlowInEasing),
+                        initialOffsetY = { it / 4 },
+                        animationSpec = tween(500, easing = FastOutSlowInEasing),
                     ),
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp)
-                        .padding(top = 4.dp),
+                        .padding(horizontal = 28.dp)
+                        .padding(top = 20.dp),
                 ) {
-                    // Eyebrow: date
+                    // Title — the hero of the page
+                    Text(
+                        text = event.title,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 36.sp,
+                            letterSpacing = (-0.3).sp,
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Date eyebrow
                     val monthName = if (event.month in 1..12) {
                         Month.of(event.month)
                             .getDisplayName(JavaTextStyle.FULL, Locale.getDefault())
@@ -134,30 +297,19 @@ fun DetailScreen(
 
                     if (monthName.isNotEmpty()) {
                         Text(
-                            text = "$monthName ${event.day}".uppercase(),
+                            text = "$monthName ${event.day}, ${event.year}".uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 1.2.sp,
                             ),
-                            color = PaperFaint,
+                            color = PaperFaint.copy(alpha = 0.5f),
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
                     }
-
-                    // Year — architectural hero
-                    Text(
-                        text = "${event.year}",
-                        style = MaterialTheme.typography.displayLarge.copy(
-                            fontSize = 80.sp,
-                            letterSpacing = (-4).sp,
-                        ),
-                        color = YearAmberMuted,
-                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // ── Content card ────────────────────────────────
+            // ── Content Card ────────────────────────────────
             AnimatedVisibility(
                 visible = contentVisible,
                 enter = fadeIn(tween(500, easing = FastOutSlowInEasing)) +
@@ -167,60 +319,21 @@ fun DetailScreen(
                     ),
             ) {
                 GlassSurfaceAccent(
-                    accentColor = YearAmberMuted,
+                    accentColor = yearColor,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp),
                 ) {
-                    Column(modifier = Modifier.padding(32.dp)) {
-                        // Title
-                        Text(
-                            text = event.title,
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                lineHeight = 36.sp,
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-                        )
-
-                        // AI Summary section
-                        if (event.aiSummary.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            Text(
-                                text = "AI SUMMARY",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                            )
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            Text(
-                                text = event.aiSummary,
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    lineHeight = 30.sp,
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-                            )
-
-                            Spacer(modifier = Modifier.height(24.dp))
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-                            )
-                        }
-
-                        // Historical record section
-                        Spacer(modifier = Modifier.height(24.dp))
-
+                    Column(modifier = Modifier.padding(28.dp)) {
+                        // What happened section
                         Text(
                             text = "WHAT HAPPENED",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                letterSpacing = 1.2.sp,
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
                         )
+
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Text(
@@ -228,14 +341,49 @@ fun DetailScreen(
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 lineHeight = 30.sp,
                             ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
                         )
 
-                        // Wikipedia link
+                        // AI Summary section
+                        if (event.aiSummary.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(28.dp))
+
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+                            )
+
+                            Spacer(modifier = Modifier.height(28.dp))
+
+                            Text(
+                                text = "AI INSIGHT",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    letterSpacing = 1.2.sp,
+                                ),
+                                color = IceBlue.copy(alpha = 0.4f),
+                            )
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            Text(
+                                text = event.aiSummary,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    lineHeight = 30.sp,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            )
+                        }
+
+                        // Wikipedia CTA
                         if (event.wikipediaUrl.isNotBlank()) {
                             Spacer(modifier = Modifier.height(32.dp))
 
-                            OutlinedButton(
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+                            )
+
+                            Spacer(modifier = Modifier.height(28.dp))
+
+                            Button(
                                 onClick = {
                                     val intent = Intent(
                                         Intent.ACTION_VIEW,
@@ -243,17 +391,21 @@ fun DetailScreen(
                                     )
                                     context.startActivity(intent)
                                 },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = IceBlue.copy(alpha = 0.12f),
+                                    contentColor = IceBlue,
+                                ),
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = IceBlue.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(18.dp),
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = "Read on Wikipedia",
-                                    color = IceBlue.copy(alpha = 0.7f),
+                                    text = "Read full article on Wikipedia",
                                     style = MaterialTheme.typography.labelLarge,
                                 )
                             }
@@ -262,7 +414,7 @@ fun DetailScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(56.dp))
+            Spacer(modifier = Modifier.height(60.dp))
         }
     }
 }
