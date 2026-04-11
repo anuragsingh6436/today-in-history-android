@@ -64,11 +64,16 @@ fun EventCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var visible by remember { mutableStateOf(false) }
+    // Only animate entrance once — survives recomposition from state updates
+    var hasAnimated by remember(event.year, event.title) { mutableStateOf(false) }
+    var visible by remember(event.year, event.title) { mutableStateOf(hasAnimated) }
 
-    LaunchedEffect(Unit) {
-        delay(index * 50L)
-        visible = true
+    LaunchedEffect(event.year, event.title) {
+        if (!hasAnimated) {
+            delay(index * 50L)
+            visible = true
+            hasAnimated = true
+        }
     }
 
     AnimatedVisibility(

@@ -1,10 +1,9 @@
 package com.bajrangi.todayinhistory.presentation.home
 
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +19,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -66,34 +66,27 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     AppBackground(modifier = modifier) {
-        AnimatedContent(
-            targetState = uiState,
-            transitionSpec = {
-                fadeIn(tween(400)) togetherWith fadeOut(tween(250))
-            },
-            contentKey = { it::class },
-            label = "homeContent",
-        ) { state ->
-            when (state) {
-                is HomeUiState.Loading -> LoadingContent()
-                is HomeUiState.Success -> {
-                    when (FeatureFlags.feedMode) {
-                        FeedMode.CARDS -> CardFeedContent(
-                            state = state,
-                            onEventClick = onEventClick,
-                            onRefresh = { viewModel.refresh() },
-                        )
-                        FeedMode.REELS -> ReelFeedContent(
-                            state = state,
-                            onEventClick = onEventClick,
-                        )
-                    }
+        when (val state = uiState) {
+            is HomeUiState.Loading -> LoadingContent()
+
+            is HomeUiState.Success -> {
+                when (FeatureFlags.feedMode) {
+                    FeedMode.CARDS -> CardFeedContent(
+                        state = state,
+                        onEventClick = onEventClick,
+                        onRefresh = { viewModel.refresh() },
+                    )
+                    FeedMode.REELS -> ReelFeedContent(
+                        state = state,
+                        onEventClick = onEventClick,
+                    )
                 }
-                is HomeUiState.Error -> ErrorContent(
-                    state = state,
-                    onRetry = { viewModel.loadEvents() },
-                )
             }
+
+            is HomeUiState.Error -> ErrorContent(
+                state = state,
+                onRetry = { viewModel.loadEvents() },
+            )
         }
     }
 }
@@ -129,14 +122,18 @@ private fun CardFeedContent(
     onEventClick: (Int) -> Unit,
     onRefresh: () -> Unit,
 ) {
+    // Preserve scroll position across recompositions
+    val listState = rememberLazyListState()
+
     LazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item {
+        item(key = "header") {
             DateHeader(
                 month = state.month,
                 day = state.day,
@@ -157,7 +154,7 @@ private fun CardFeedContent(
             )
         }
 
-        item { Spacer(modifier = Modifier.height(32.dp)) }
+        item(key = "spacer") { Spacer(modifier = Modifier.height(32.dp)) }
     }
 }
 
@@ -175,7 +172,6 @@ private fun ReelFeedContent(
 
     val pagerState = rememberPagerState(pageCount = { state.events.size })
 
-    // Auto-scroll every 10 seconds
     LaunchedEffect(pagerState, state.events.size) {
         snapshotFlow { pagerState.isScrollInProgress }.collect { scrolling ->
             if (!scrolling && state.events.size > 1) {
