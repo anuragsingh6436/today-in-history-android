@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,31 +31,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bajrangi.todayinhistory.config.FeedMode
+import com.bajrangi.todayinhistory.config.FeatureFlags
 import com.bajrangi.todayinhistory.presentation.components.AppBackground
 import com.bajrangi.todayinhistory.presentation.components.EventCard
+import com.bajrangi.todayinhistory.presentation.components.ReelPage
+import com.bajrangi.todayinhistory.presentation.components.ReelShimmer
 import com.bajrangi.todayinhistory.presentation.components.ShimmerLoadingList
 import com.bajrangi.todayinhistory.presentation.theme.IceBlue
 import com.bajrangi.todayinhistory.presentation.theme.PaperFaint
 import com.bajrangi.todayinhistory.presentation.theme.RoseGold
+import kotlinx.coroutines.delay
 import java.time.Month
 import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
 
-/**
- * Home screen — scrollable card feed.
- *
- * Events with images get large image cards (Google Discover style).
- * Events without images get clean text-only glass cards.
- */
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
@@ -73,38 +75,56 @@ fun HomeScreen(
             label = "homeContent",
         ) { state ->
             when (state) {
-                is HomeUiState.Loading -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .statusBarsPadding(),
-                    ) {
-                        DateHeader(month = 0, day = 0)
-                        ShimmerLoadingList(modifier = Modifier.padding(top = 8.dp))
+                is HomeUiState.Loading -> LoadingContent()
+                is HomeUiState.Success -> {
+                    when (FeatureFlags.feedMode) {
+                        FeedMode.CARDS -> CardFeedContent(
+                            state = state,
+                            onEventClick = onEventClick,
+                            onRefresh = { viewModel.refresh() },
+                        )
+                        FeedMode.REELS -> ReelFeedContent(
+                            state = state,
+                            onEventClick = onEventClick,
+                        )
                     }
                 }
-
-                is HomeUiState.Success -> {
-                    FeedContent(
-                        state = state,
-                        onEventClick = onEventClick,
-                        onRefresh = { viewModel.refresh() },
-                    )
-                }
-
-                is HomeUiState.Error -> {
-                    ErrorContent(
-                        state = state,
-                        onRetry = { viewModel.loadEvents() },
-                    )
-                }
+                is HomeUiState.Error -> ErrorContent(
+                    state = state,
+                    onRetry = { viewModel.loadEvents() },
+                )
             }
         }
     }
 }
 
+// ── Loading ─────────────────────────────────────────────────────
+
 @Composable
-private fun FeedContent(
+private fun LoadingContent() {
+    when (FeatureFlags.feedMode) {
+        FeedMode.CARDS -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding(),
+            ) {
+                DateHeader(month = 0, day = 0)
+                ShimmerLoadingList(modifier = Modifier.padding(top = 8.dp))
+            }
+        }
+        FeedMode.REELS -> {
+            Box(modifier = Modifier.fillMaxSize()) {
+                ReelShimmer()
+            }
+        }
+    }
+}
+
+// ── Cards Mode ──────────────────────────────────────────────────
+
+@Composable
+private fun CardFeedContent(
     state: HomeUiState.Success,
     onEventClick: (Int) -> Unit,
     onRefresh: () -> Unit,
@@ -116,7 +136,6 @@ private fun FeedContent(
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Date header
         item {
             DateHeader(
                 month = state.month,
@@ -127,7 +146,6 @@ private fun FeedContent(
             )
         }
 
-        // Event cards
         itemsIndexed(
             items = state.events,
             key = { _, event -> "${event.year}_${event.title}" },
@@ -139,10 +157,56 @@ private fun FeedContent(
             )
         }
 
-        // Bottom spacer
         item { Spacer(modifier = Modifier.height(32.dp)) }
     }
 }
+
+// ── Reels Mode ──────────────────────────────────────────────────
+
+@Composable
+private fun ReelFeedContent(
+    state: HomeUiState.Success,
+    onEventClick: (Int) -> Unit,
+) {
+    if (state.events.isEmpty()) {
+        EmptyContent()
+        return
+    }
+
+    val pagerState = rememberPagerState(pageCount = { state.events.size })
+
+    // Auto-scroll every 10 seconds
+    LaunchedEffect(pagerState, state.events.size) {
+        snapshotFlow { pagerState.isScrollInProgress }.collect { scrolling ->
+            if (!scrolling && state.events.size > 1) {
+                delay(10_000)
+                val next = (pagerState.currentPage + 1) % state.events.size
+                pagerState.animateScrollToPage(
+                    page = next,
+                    animationSpec = tween(durationMillis = 1000),
+                )
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        VerticalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            beyondViewportPageCount = 1,
+        ) { page ->
+            ReelPage(
+                event = state.events[page],
+                pageIndex = page,
+                totalPages = state.events.size,
+                isCurrentPage = pagerState.currentPage == page,
+                onClick = { onEventClick(page) },
+            )
+        }
+    }
+}
+
+// ── Shared Components ───────────────────────────────────────────
 
 @Composable
 private fun DateHeader(
@@ -161,7 +225,6 @@ private fun DateHeader(
             .fillMaxWidth()
             .padding(top = 12.dp, bottom = 8.dp),
     ) {
-        // App label
         Text(
             text = "TODAY IN HISTORY",
             style = MaterialTheme.typography.labelSmall,
@@ -170,7 +233,6 @@ private fun DateHeader(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Date + refresh
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -203,13 +265,34 @@ private fun DateHeader(
             }
         }
 
-        // Event count
         if (eventCount > 0) {
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = "$eventCount events on this day",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyContent() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "No events found",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White.copy(alpha = 0.6f),
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Nothing recorded for this date yet.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.3f),
             )
         }
     }
