@@ -44,7 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.SubcomposeAsyncImage
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.bajrangi.todayinhistory.R
 import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
@@ -107,16 +107,18 @@ fun ReelPage(
     ) {
         // ── Full-screen image ───────────────────────────────
         if (event.thumbnailUrl.isNotBlank()) {
-            SubcomposeAsyncImage(
+            AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(event.thumbnailUrl)
-                    .crossfade(400)
+                    .crossfade(200)
+                    .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                    .diskCachePolicy(coil.request.CachePolicy.ENABLED)
                     .build(),
                 contentDescription = event.title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                loading = { PlaceholderFull() },
-                error = { PlaceholderFull() },
+                placeholder = painterResource(R.drawable.placeholder_history),
+                error = painterResource(R.drawable.placeholder_history),
             )
         } else {
             PlaceholderFull()

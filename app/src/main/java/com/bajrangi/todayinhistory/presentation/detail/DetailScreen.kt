@@ -55,7 +55,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.SubcomposeAsyncImage
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.bajrangi.todayinhistory.R
 import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
@@ -144,30 +144,18 @@ fun DetailScreen(
                 ) {
                     // Image
                     if (event.thumbnailUrl.isNotBlank()) {
-                        SubcomposeAsyncImage(
+                        AsyncImage(
                             model = ImageRequest.Builder(context)
                                 .data(event.thumbnailUrl)
-                                .crossfade(400)
+                                .crossfade(200)
+                                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
                                 .build(),
                             contentDescription = event.title,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize(),
-                            loading = {
-                                Image(
-                                    painter = painterResource(R.drawable.placeholder_history),
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            },
-                            error = {
-                                Image(
-                                    painter = painterResource(R.drawable.placeholder_history),
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            },
+                            placeholder = painterResource(R.drawable.placeholder_history),
+                            error = painterResource(R.drawable.placeholder_history),
                         )
                     } else {
                         Image(

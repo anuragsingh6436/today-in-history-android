@@ -3,7 +3,6 @@ package com.bajrangi.todayinhistory.presentation.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,8 +31,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.SubcomposeAsyncImage
+import coil.compose.AsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
+import coil.size.Size
 import com.bajrangi.todayinhistory.R
 import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
 import com.bajrangi.todayinhistory.presentation.theme.EraAncientMuted
@@ -83,16 +84,19 @@ fun EventCard(
                     .aspectRatio(if (isFeatured) 4f / 3f else 16f / 9f),
             ) {
                 if (event.thumbnailUrl.isNotBlank()) {
-                    SubcomposeAsyncImage(
+                    AsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(event.thumbnailUrl)
-                            .crossfade(300)
+                            .crossfade(200)
+                            .size(Size.ORIGINAL)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
                             .build(),
                         contentDescription = event.title,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
-                        loading = { PlaceholderImage() },
-                        error = { PlaceholderImage() },
+                        placeholder = painterResource(R.drawable.placeholder_history),
+                        error = painterResource(R.drawable.placeholder_history),
                     )
                 } else {
                     PlaceholderImage()
@@ -137,7 +141,7 @@ fun EventCard(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.8.sp,
                     ),
-                    color = if (isDark) Color.White else Color.White,
+                    color = Color.White,
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(14.dp)
@@ -182,7 +186,6 @@ fun EventCard(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Era tag
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
