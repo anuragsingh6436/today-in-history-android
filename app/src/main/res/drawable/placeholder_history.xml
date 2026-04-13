@@ -1,41 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="330dp"
-    android:height="186dp"
-    android:viewportWidth="330"
-    android:viewportHeight="186">
+    android:width="800dp"
+    android:height="450dp"
+    android:viewportWidth="800"
+    android:viewportHeight="450">
 
-    <!-- Background -->
+    <!-- Background gradient base -->
     <path
-        android:fillColor="#121A36"
-        android:pathData="M0,0h330v186H0z" />
+        android:fillColor="#0E1530"
+        android:pathData="M0,0h800v450H0z" />
 
-    <!-- Subtle grid lines (historical feel) -->
+    <!-- Subtle radial glow center -->
     <path
-        android:strokeColor="#1A2240"
-        android:strokeWidth="0.5"
-        android:pathData="M0,46h330 M0,93h330 M0,140h330 M82,0v186 M165,0v186 M248,0v186" />
+        android:fillColor="#141C3A"
+        android:pathData="M400,225 m-280,0 a280,200 0 1,1 560,0 a280,200 0 1,1 -560,0" />
 
-    <!-- Scroll/document icon -->
+    <!-- Inner glow -->
     <path
-        android:fillColor="#1A2240"
-        android:pathData="M135,58 C135,54 138,51 142,51 L188,51 C192,51 195,54 195,58 L195,128 C195,132 192,135 188,135 L142,135 C138,135 135,132 135,128 Z" />
+        android:fillColor="#182040"
+        android:pathData="M400,225 m-160,0 a160,120 0 1,1 320,0 a160,120 0 1,1 -320,0" />
 
-    <!-- Document lines -->
+    <!-- Decorative horizontal line left -->
     <path
         android:strokeColor="#26305A"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:pathData="M148,70h34 M148,82h28 M148,94h32 M148,106h20" />
+        android:strokeWidth="1"
+        android:pathData="M120,225 L340,225" />
 
-    <!-- Clock accent (history = time) -->
+    <!-- Decorative horizontal line right -->
+    <path
+        android:strokeColor="#26305A"
+        android:strokeWidth="1"
+        android:pathData="M460,225 L680,225" />
+
+    <!-- Decorative diamond left -->
     <path
         android:fillColor="#26305A"
-        android:pathData="M165,118 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0" />
+        android:pathData="M340,225 L345,220 L350,225 L345,230 Z" />
+
+    <!-- Decorative diamond right -->
+    <path
+        android:fillColor="#26305A"
+        android:pathData="M450,225 L455,220 L460,225 L455,230 Z" />
+
+    <!-- Hourglass outer shape -->
+    <path
+        android:fillColor="#1E2850"
+        android:pathData="M370,145 L430,145 L430,155 L415,200 L415,250 L430,295 L430,305 L370,305 L370,295 L385,250 L385,200 L370,155 Z" />
+
+    <!-- Hourglass inner cutout -->
+    <path
+        android:fillColor="#0E1530"
+        android:pathData="M378,155 L422,155 L410,200 L410,250 L422,295 L378,295 L390,250 L390,200 Z" />
+
+    <!-- Sand in bottom half -->
+    <path
+        android:fillColor="#D4B96A"
+        android:fillAlpha="0.25"
+        android:pathData="M384,280 L416,280 L420,295 L380,295 Z" />
+
+    <!-- Sand trickling (center dot) -->
+    <path
+        android:fillColor="#D4B96A"
+        android:fillAlpha="0.35"
+        android:pathData="M400,225 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0" />
+
+    <!-- Hourglass frame lines (top & bottom caps) -->
     <path
         android:strokeColor="#7FD8FF"
-        android:strokeWidth="1.5"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:pathData="M165,114v4h3"
-        android:fillColor="#00000000" />
+        android:strokeAlpha="0.3"
+        android:pathData="M368,145 L432,145 M368,305 L432,305" />
+
+    <!-- Subtle corner flourish top-left -->
+    <path
+        android:strokeColor="#26305A"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M40,40 L40,70 M40,40 L70,40" />
+
+    <!-- Subtle corner flourish top-right -->
+    <path
+        android:strokeColor="#26305A"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M760,40 L760,70 M760,40 L730,40" />
+
+    <!-- Subtle corner flourish bottom-left -->
+    <path
+        android:strokeColor="#26305A"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M40,410 L40,380 M40,410 L70,410" />
+
+    <!-- Subtle corner flourish bottom-right -->
+    <path
+        android:strokeColor="#26305A"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M760,410 L760,380 M760,410 L730,410" />
+
+    <!-- "TODAY IN HISTORY" text placeholder - subtle dots -->
+    <path
+        android:fillColor="#26305A"
+        android:pathData="M375,340 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0" />
+    <path
+        android:fillColor="#26305A"
+        android:pathData="M400,340 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0" />
+    <path
+        android:fillColor="#26305A"
+        android:pathData="M425,340 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0" />
+
 </vector>
