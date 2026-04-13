@@ -17,6 +17,8 @@ data class EventEntity(
     val wikipediaUrl: String = "",
     val thumbnailUrl: String = "",
     val aiSummary: String = "",
+    val category: String = "",
+    val region: String = "",
     val cachedAt: Long = System.currentTimeMillis(),
 )
 
@@ -27,6 +29,8 @@ fun EventEntity.toDomain() = HistoricalEvent(
     wikipediaUrl = wikipediaUrl,
     thumbnailUrl = thumbnailUrl,
     aiSummary = aiSummary,
+    category = category,
+    region = region,
     month = month,
     day = day,
 )
@@ -40,4 +44,6 @@ fun EventDto.toEntity() = EventEntity(
     wikipediaUrl = wikipediaUrl,
     thumbnailUrl = thumbnailUrl,
     aiSummary = aiSummary,
+    category = category,
+    region = region,
 )

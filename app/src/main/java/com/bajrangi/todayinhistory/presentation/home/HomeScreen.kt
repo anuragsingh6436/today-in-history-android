@@ -44,6 +44,7 @@ import com.bajrangi.todayinhistory.config.FeedMode
 import com.bajrangi.todayinhistory.config.FeatureFlags
 import com.bajrangi.todayinhistory.presentation.components.AppBackground
 import com.bajrangi.todayinhistory.presentation.components.EventCard
+import com.bajrangi.todayinhistory.presentation.components.FilterChipRow
 import com.bajrangi.todayinhistory.presentation.components.ReelPage
 import com.bajrangi.todayinhistory.presentation.components.ReelShimmer
 import com.bajrangi.todayinhistory.presentation.components.ShimmerLoadingList
@@ -76,6 +77,8 @@ fun HomeScreen(
                         onEventClick = onEventClick,
                         onSettingsClick = onSettingsClick,
                         onRefresh = { viewModel.refresh() },
+                        onRegionSelect = { viewModel.selectRegion(it) },
+                        onCategorySelect = { viewModel.selectCategory(it) },
                     )
                     FeedMode.REELS -> ReelFeedContent(
                         state = state,
@@ -129,6 +132,8 @@ private fun CardFeedContent(
     onEventClick: (Int) -> Unit,
     onSettingsClick: () -> Unit,
     onRefresh: () -> Unit,
+    onRegionSelect: (String) -> Unit,
+    onCategorySelect: (String) -> Unit,
 ) {
     val listState = rememberLazyListState()
 
@@ -144,15 +149,41 @@ private fun CardFeedContent(
             DateHeader(
                 month = state.month,
                 day = state.day,
-                eventCount = state.events.size,
+                eventCount = state.filteredEvents.size,
+                totalCount = state.events.size,
                 isRefreshing = state.isRefreshing,
                 onRefresh = onRefresh,
                 onSettingsClick = onSettingsClick,
             )
         }
 
+        // Filter chips
+        if (state.availableRegions.size > 2 || state.availableCategories.size > 2) {
+            item(key = "filters") {
+                Column {
+                    if (state.availableRegions.size > 2) {
+                        FilterChipRow(
+                            label = "REGION",
+                            options = state.availableRegions,
+                            selected = state.selectedRegion,
+                            onSelect = onRegionSelect,
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    if (state.availableCategories.size > 2) {
+                        FilterChipRow(
+                            label = "CATEGORY",
+                            options = state.availableCategories,
+                            selected = state.selectedCategory,
+                            onSelect = onCategorySelect,
+                        )
+                    }
+                }
+            }
+        }
+
         itemsIndexed(
-            items = state.events,
+            items = state.filteredEvents,
             key = { _, event -> "${event.year}_${event.title}" },
         ) { index, event ->
             EventCard(
@@ -174,18 +205,19 @@ private fun ReelFeedContent(
     onEventClick: (Int) -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    if (state.events.isEmpty()) {
+    val events = state.filteredEvents
+    if (events.isEmpty()) {
         EmptyContent()
         return
     }
 
-    val pagerState = rememberPagerState(pageCount = { state.events.size })
+    val pagerState = rememberPagerState(pageCount = { events.size })
 
-    LaunchedEffect(pagerState, state.events.size) {
+    LaunchedEffect(pagerState, events.size) {
         snapshotFlow { pagerState.isScrollInProgress }.collect { scrolling ->
-            if (!scrolling && state.events.size > 1) {
+            if (!scrolling && events.size > 1) {
                 delay(10_000)
-                val next = (pagerState.currentPage + 1) % state.events.size
+                val next = (pagerState.currentPage + 1) % events.size
                 pagerState.animateScrollToPage(
                     page = next,
                     animationSpec = tween(durationMillis = 1000),
@@ -201,9 +233,9 @@ private fun ReelFeedContent(
             beyondViewportPageCount = 1,
         ) { page ->
             ReelPage(
-                event = state.events[page],
+                event = events[page],
                 pageIndex = page,
-                totalPages = state.events.size,
+                totalPages = events.size,
                 isCurrentPage = pagerState.currentPage == page,
                 onClick = { onEventClick(page) },
             )
@@ -238,6 +270,7 @@ private fun DateHeader(
     month: Int,
     day: Int,
     eventCount: Int = 0,
+    totalCount: Int = 0,
     isRefreshing: Boolean = false,
     onRefresh: (() -> Unit)? = null,
     onSettingsClick: (() -> Unit)? = null,
@@ -322,8 +355,13 @@ private fun DateHeader(
         // Event count
         if (eventCount > 0) {
             Spacer(modifier = Modifier.height(6.dp))
+            val countText = if (totalCount > 0 && eventCount != totalCount) {
+                "$eventCount of $totalCount events"
+            } else {
+                "$eventCount events on this day"
+            }
             Text(
-                text = "$eventCount events on this day",
+                text = countText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
             )

@@ -18,6 +18,8 @@ data class EventDto(
     @SerialName("wikipedia_url") val wikipediaUrl: String = "",
     @SerialName("thumbnail_url") val thumbnailUrl: String = "",
     @SerialName("ai_summary") val aiSummary: String = "",
+    val category: String = "",
+    val region: String = "",
     val month: Int = 0,
     val day: Int = 0,
 )
@@ -45,6 +47,8 @@ fun EventDto.toDomain() = HistoricalEvent(
     wikipediaUrl = wikipediaUrl,
     thumbnailUrl = thumbnailUrl,
     aiSummary = aiSummary,
+    category = category,
+    region = region,
     month = month,
     day = day,
 )

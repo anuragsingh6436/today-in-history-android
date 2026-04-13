@@ -20,21 +20,23 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    /** Currently displayed date — defaults to today. */
     private var currentMonth: Int = LocalDate.now().monthValue
     private var currentDay: Int = LocalDate.now().dayOfMonth
 
-    /** Currently loaded events — used by the detail screen. */
-    private var _events: List<HistoricalEvent> = emptyList()
+    /** Full unfiltered list — used for detail screen lookup. */
+    private var _allEvents: List<HistoricalEvent> = emptyList()
+    /** Currently displayed filtered list — detail uses this for index. */
+    private var _filteredEvents: List<HistoricalEvent> = emptyList()
+
+    private var selectedRegion = "All"
+    private var selectedCategory = "All"
 
     init {
         loadEvents()
     }
 
-    /** Load events for the current date. Shows loading shimmer on first call. */
     fun loadEvents() {
         viewModelScope.launch {
-            // Only show full loading state on the very first load.
             if (_uiState.value !is HomeUiState.Success) {
                 _uiState.value = HomeUiState.Loading
             }
@@ -42,24 +44,16 @@ class HomeViewModel @Inject constructor(
             getEventsUseCase(currentMonth, currentDay).collect { result ->
                 result.fold(
                     onSuccess = { events ->
-                        _events = events
-                        _uiState.value = HomeUiState.Success(
-                            events = events,
-                            month = currentMonth,
-                            day = currentDay,
-                            isRefreshing = false,
-                        )
+                        _allEvents = events
+                        emitFiltered(events)
                     },
                     onFailure = { error ->
-                        // If we already have events showing, keep them
-                        // and just stop the refresh indicator.
                         val current = _uiState.value
                         if (current is HomeUiState.Success && current.events.isNotEmpty()) {
                             _uiState.value = current.copy(isRefreshing = false)
                         } else {
                             _uiState.value = HomeUiState.Error(
-                                message = error.localizedMessage
-                                    ?: "Failed to load events",
+                                message = error.localizedMessage ?: "Failed to load events",
                                 month = currentMonth,
                                 day = currentDay,
                             )
@@ -70,7 +64,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Pull-to-refresh — shows the refresh indicator on existing content. */
     fun refresh() {
         val current = _uiState.value
         if (current is HomeUiState.Success) {
@@ -79,17 +72,64 @@ class HomeViewModel @Inject constructor(
         loadEvents()
     }
 
-    /** Switch to a different date. */
+    fun selectRegion(region: String) {
+        selectedRegion = region
+        emitFiltered(_allEvents)
+    }
+
+    fun selectCategory(category: String) {
+        selectedCategory = category
+        emitFiltered(_allEvents)
+    }
+
     fun selectDate(month: Int, day: Int) {
         if (month == currentMonth && day == currentDay) return
         currentMonth = month
         currentDay = day
+        selectedRegion = "All"
+        selectedCategory = "All"
         _uiState.value = HomeUiState.Loading
         loadEvents()
     }
 
-    /** Get event by index for the detail screen. */
+    /** Get event by index from the FILTERED list. */
     fun getEvent(index: Int): HistoricalEvent? {
-        return _events.getOrNull(index)
+        return _filteredEvents.getOrNull(index)
+    }
+
+    private fun emitFiltered(events: List<HistoricalEvent>) {
+        // Extract available filters from data
+        val regions = listOf("All") + events
+            .map { it.region }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+
+        val categories = listOf("All") + events
+            .map { it.category }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+
+        // Apply filters
+        val filtered = events.filter { event ->
+            val regionMatch = selectedRegion == "All" || event.region == selectedRegion
+            val categoryMatch = selectedCategory == "All" || event.category == selectedCategory
+            regionMatch && categoryMatch
+        }
+
+        _filteredEvents = filtered
+
+        _uiState.value = HomeUiState.Success(
+            events = events,
+            filteredEvents = filtered,
+            month = currentMonth,
+            day = currentDay,
+            isRefreshing = false,
+            selectedRegion = selectedRegion,
+            selectedCategory = selectedCategory,
+            availableRegions = regions,
+            availableCategories = categories,
+        )
     }
 }
