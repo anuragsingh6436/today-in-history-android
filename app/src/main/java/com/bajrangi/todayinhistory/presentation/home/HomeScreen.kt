@@ -157,11 +157,11 @@ private fun CardFeedContent(
             )
         }
 
-        // Filter chips
-        if (state.availableRegions.size > 2 || state.availableCategories.size > 2) {
+        // Filter chips — always show if any categories/regions exist
+        if (state.availableRegions.size > 1 || state.availableCategories.size > 1) {
             item(key = "filters") {
                 Column {
-                    if (state.availableRegions.size > 2) {
+                    if (state.availableRegions.size > 1) {
                         FilterChipRow(
                             label = "REGION",
                             options = state.availableRegions,
@@ -170,7 +170,7 @@ private fun CardFeedContent(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
-                    if (state.availableCategories.size > 2) {
+                    if (state.availableCategories.size > 1) {
                         FilterChipRow(
                             label = "CATEGORY",
                             options = state.availableCategories,
