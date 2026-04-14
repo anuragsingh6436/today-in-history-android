@@ -84,6 +84,8 @@ fun HomeScreen(
                         state = state,
                         onEventClick = onEventClick,
                         onSettingsClick = onSettingsClick,
+                        onRegionSelect = { viewModel.selectRegion(it) },
+                        onCategorySelect = { viewModel.selectCategory(it) },
                     )
                 }
             }
@@ -204,6 +206,8 @@ private fun ReelFeedContent(
     state: HomeUiState.Success,
     onEventClick: (Int) -> Unit,
     onSettingsClick: () -> Unit,
+    onRegionSelect: (String) -> Unit,
+    onCategorySelect: (String) -> Unit,
 ) {
     val events = state.filteredEvents
     if (events.isEmpty()) {
@@ -241,24 +245,59 @@ private fun ReelFeedContent(
             )
         }
 
-        // Settings icon — top right
-        IconButton(
-            onClick = onSettingsClick,
+        // Top overlay — settings + filter chips
+        Column(
             modifier = Modifier
-                .align(Alignment.TopEnd)
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(end = 12.dp, top = 12.dp)
-                .size(40.dp),
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
-            ),
+                .padding(top = 8.dp),
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Settings,
-                contentDescription = "Settings",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                modifier = Modifier.size(20.dp),
-            )
+            // Settings row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                IconButton(
+                    onClick = onSettingsClick,
+                    modifier = Modifier.size(40.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+
+            // Filter chips
+            if (state.availableRegions.size > 1 || state.availableCategories.size > 1) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    if (state.availableRegions.size > 1) {
+                        FilterChipRow(
+                            label = "REGION",
+                            options = state.availableRegions,
+                            selected = state.selectedRegion,
+                            onSelect = onRegionSelect,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    if (state.availableCategories.size > 1) {
+                        FilterChipRow(
+                            label = "CATEGORY",
+                            options = state.availableCategories,
+                            selected = state.selectedCategory,
+                            onSelect = onCategorySelect,
+                        )
+                    }
+                }
+            }
         }
     }
 }
