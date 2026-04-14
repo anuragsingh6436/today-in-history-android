@@ -1,5 +1,6 @@
 package com.bajrangi.todayinhistory.presentation.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bajrangi.todayinhistory.domain.model.HistoricalEvent
@@ -98,6 +99,10 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun emitFiltered(events: List<HistoricalEvent>) {
+        Log.d("HomeVM", "emitFiltered: ${events.size} events")
+        Log.d("HomeVM", "Sample categories: ${events.take(5).map { it.category }}")
+        Log.d("HomeVM", "Sample regions: ${events.take(5).map { it.region }}")
+
         // Extract available filters from data
         val regions = listOf("All") + events
             .map { it.region }
@@ -110,6 +115,9 @@ class HomeViewModel @Inject constructor(
             .filter { it.isNotBlank() }
             .distinct()
             .sorted()
+
+        Log.d("HomeVM", "Available regions: $regions")
+        Log.d("HomeVM", "Available categories: $categories")
 
         // Apply filters
         val filtered = events.filter { event ->
